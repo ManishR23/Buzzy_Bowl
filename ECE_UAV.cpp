@@ -113,3 +113,9 @@ void handleCollisions(std::vector<ECE_UAV>& uavs)
         }
     }
 }
+
+void ECE_UAV::join()
+{
+    if (uavThread.joinable())
+        uavThread.join();
+}

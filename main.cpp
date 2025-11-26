@@ -2,10 +2,13 @@
 #include <iostream>
 #include <vector>
 #include <GL/glut.h>
+#include <thread>
+#include <mutex>
 
 
 // global uavs vector
 std::vector<ECE_UAV> uavs;
+std::mutex uavMutex;
 
 // init UAVs onto football field
 void initUAVs()
@@ -51,6 +54,9 @@ void display()
 
     // UAVs = red spheres for now
     glColor3f(1.0, 0.0, 0.0);
+
+    // lock mutex for thread safety
+    uavMutex.lock();
     for (const auto& uav : uavs)
     {
         glPushMatrix();
@@ -58,8 +64,25 @@ void display()
         glutSolidSphere(1.0, 20, 20); // UAV represented as sphere
         glPopMatrix();
     }
+    uavMutex.unlock();
 
     glutSwapBuffers();
+}
+
+void updateUAVs()
+{   
+    while (true)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // run every 10ms
+        uavMutex.lock();
+        for (auto& uav : uavs)
+        {
+            uav.controlLoop();
+        }
+        uavMutex.unlock();
+
+        glutPostRedisplay(); // request display update
+    }
 }
 
 
@@ -73,15 +96,19 @@ int main(int argc, char** argv)
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(400, 400);
-    glutCreateWindow("ECE UAV Simulation");
+    glutCreateWindow("Buzzy_Bowl UAV Simulation");
 
     initOpenGL();
 
     // set display function
     glutDisplayFunc(display);
 
+
+    std::thread updateThread(updateUAVs);
+
     // start main loop
     glutMainLoop();
+    updateThread.join();
 
     return 0;
 }
