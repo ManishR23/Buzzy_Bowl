@@ -4,21 +4,22 @@
 #include <thread>
 #include <chrono>
 #include <vector>
-#include <GL/glut.h>
+#include <mutex>
+
+extern std::mutex uavMutex;
 
 class PIDController {
 public:
     double Kp, Ki, Kd;
     double integral, lastError;
-    double error, derivative;
 
     PIDController(double p = 0.0, double i = 0.0, double d = 0.0)
-        : Kp(p), Ki(i), Kd(d), integral(0.0), lastError(0.0), error(0.0), derivative(0.0) {}
+        : Kp(p), Ki(i), Kd(d), integral(0.0), lastError(0.0) {}
     
     double calculate(double error, double dt)
     {
         integral += error * dt;
-        derivative = (error - lastError) / dt;
+        double derivative = (dt > 0.0) ? (error - lastError) / dt : 0.0;
         lastError = error;
 
         return Kp * error + Ki * integral + Kd * derivative;
@@ -38,6 +39,7 @@ public:
     float posX, posY, posZ;
     float velX, velY, velZ;
     float accX, accY, accZ;
+
     double mass;
     double maxForcePerAxis;
     double dragCoeff;
@@ -55,6 +57,7 @@ public:
     void controlLoop();
 };
 
+void threadFunction(ECE_UAV* uav);
 void handleCollisions(std::vector<ECE_UAV>& uavs);
 
 #endif
