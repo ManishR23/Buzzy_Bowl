@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/uav_simulation.dir/main.cpp.o CMakeFiles/uav_simulation.dir/ECE_UAV.cpp.o CMakeFiles/uav_simulation.dir/ObjModel.cpp.o -o uav_simulation  -framework OpenGL -framework OpenGL -framework GLUT -framework Cocoa
