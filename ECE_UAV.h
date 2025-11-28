@@ -34,7 +34,9 @@ public:
 
 class ECE_UAV {
 public:
-    
+    // Flight phase for each UAV
+    enum class FlightPhase { OnGround, ToCenter, OnSphere };
+
     // UAV variables
     float posX, posY, posZ;
     float velX, velY, velZ;
@@ -48,16 +50,24 @@ public:
     PIDController pidX, pidY, pidZ;
     PIDController pidVx, pidVy, pidVz;
 
+    // New state
+    FlightPhase phase;
+    bool hasVisitedCenter;
+    float simTime;      // seconds since this UAV started
+
     // constructor
     ECE_UAV(float x, float y, float z);
 
     // methods
-    void applyPIDControl();
+    void applyPIDControl();     // sphere control (you already have this)
+    void applyCenterControl();  // NEW: go toward (0,0,50)
     void checkCollision(ECE_UAV& otherUAV);
     void controlLoop();
 };
+
 
 void threadFunction(ECE_UAV* uav);
 void handleCollisions(std::vector<ECE_UAV>& uavs);
 
 #endif
+

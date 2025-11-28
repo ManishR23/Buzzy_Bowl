@@ -13,6 +13,7 @@ find_package(GLUT REQUIRED)
 set(SOURCES
     main.cpp
     ECE_UAV.cpp
+    ObjModel.cpp
 )
 
 # Create the executable
