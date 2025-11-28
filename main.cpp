@@ -2,10 +2,13 @@
 #include <iostream>
 #include <vector>
 #include <GL/glut.h>
+#include <thread>
+#include <mutex>
 
 
 // global uavs vector
 std::vector<ECE_UAV> uavs;
+std::mutex uavMutex;
 
 // init UAVs onto football field
 void initUAVs()
@@ -19,10 +22,7 @@ void initUAVs()
 
     for (int i = 0; i < 15; ++i)
     {
-        ECE_UAV newUAV(uavPositions[i][0], uavPositions[i][1], 0.0f);
-        uavs.push_back(newUAV);
-        newUAV.start(); // staart UAV thread
-        
+        uavs.emplace_back(uavPositions[i][0], uavPositions[i][1], 0.0f);
     }
 }
 
@@ -37,29 +37,44 @@ void initOpenGL()
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0f, 125.0f / 50.0f, 1.0f, 200.0f);
+    gluPerspective(60.0, 1.0, 1.0, 500.00);
+
+    glMatrixMode(GL_MODELVIEW);
 }
 
 // display OpenGL
 void display() 
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
     // set camera
-    gluLookAt(0.0, 0.0, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(50.0, 50.0, 200.0, 
+        50.0, 50.0, 0.0, 
+        0.0, 1.0, 0.0);
 
     // UAVs = red spheres for now
     glColor3f(1.0, 0.0, 0.0);
+
+    // lock mutex for thread safety
+    uavMutex.lock();
     for (const auto& uav : uavs)
     {
         glPushMatrix();
         glTranslatef(uav.posX, uav.posY, uav.posZ);
-        glutSolidSphere(1.0, 20, 20); // UAV represented as sphere
+        glutSolidSphere(2.0, 20, 20); // UAV represented as sphere
         glPopMatrix();
     }
+    uavMutex.unlock();
 
     glutSwapBuffers();
+}
+
+void updateScene(int value)
+{   
+    glutPostRedisplay(); 
+    glutTimerFunc(10, updateScene, 0); 
 }
 
 
@@ -69,19 +84,34 @@ int main(int argc, char** argv)
     // initialize UAVs
     initUAVs();
 
+    std::vector<std::thread> threads;
+    threads.reserve(15);
+
+    for (int i = 0; i < 15; ++i)
+    {
+        threads.emplace_back(threadFunction, &uavs[i]);
+    }
+
+    for (auto& th : threads)
+    {
+        th.detach(); // detach threads to run independently
+    }
+
     // initialize OpenGL
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(400, 400);
-    glutCreateWindow("ECE UAV Simulation");
+    glutCreateWindow("Buzzy_Bowl UAV Simulation");
 
     initOpenGL();
 
     // set display function
     glutDisplayFunc(display);
 
+
+    glutTimerFunc(10, updateScene, 0); // start update loop
+
     // start main loop
     glutMainLoop();
-
     return 0;
 }
