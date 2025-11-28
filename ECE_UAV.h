@@ -41,7 +41,6 @@ public:
     double mass;
     double maxForcePerAxis;
     double dragCoeff;
-    std::thread uavThread; // thread for UAV control loop
 
     // PID Controller variables
     PIDController pidX, pidY, pidZ;
@@ -53,12 +52,6 @@ public:
     // methods
     void applyPIDControl();
     void checkCollision(ECE_UAV& otherUAV);
-    void start();
-    void join()
-    {
-        if (uavThread.joinable())
-            uavThread.join();
-    }
     void controlLoop();
 };
 

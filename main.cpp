@@ -22,10 +22,7 @@ void initUAVs()
 
     for (int i = 0; i < 15; ++i)
     {
-        ECE_UAV newUAV(uavPositions[i][0], uavPositions[i][1], 0.0f);
-        uavs.push_back(newUAV);
-        newUAV.start(); // staart UAV thread
-        
+        uavs.emplace_back(uavPositions[i][0], uavPositions[i][1], 0.0f);
     }
 }
 
@@ -40,7 +37,7 @@ void initOpenGL()
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0f, 125.0f / 50.0f, 1.0f, 200.0f);
+    gluPerspective(60.0, 1.0, 1.0, 500.00);
 }
 
 // display OpenGL
@@ -50,7 +47,9 @@ void display()
     glLoadIdentity();
 
     // set camera
-    gluLookAt(0.0, 0.0, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(50.0, 50.0, 200.0, 
+        50.0, 50.0, 0.0, 
+        0.0, 1.0, 0.0);
 
     // UAVs = red spheres for now
     glColor3f(1.0, 0.0, 0.0);
@@ -61,7 +60,7 @@ void display()
     {
         glPushMatrix();
         glTranslatef(uav.posX, uav.posY, uav.posZ);
-        glutSolidSphere(1.0, 20, 20); // UAV represented as sphere
+        glutSolidSphere(2.0, 20, 20); // UAV represented as sphere
         glPopMatrix();
     }
     uavMutex.unlock();
@@ -69,20 +68,18 @@ void display()
     glutSwapBuffers();
 }
 
-void updateUAVs()
+void updateUAVs(int value)
 {   
-    while (true)
+    uavMutex.lock();
+    for (auto& uav : uavs)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // run every 10ms
-        uavMutex.lock();
-        for (auto& uav : uavs)
-        {
-            uav.controlLoop();
-        }
-        uavMutex.unlock();
-
-        glutPostRedisplay(); // request display update
+        uav.controlLoop();
     }
+    uavMutex.unlock();
+
+    glutPostRedisplay(); 
+    glutTimerFunc(10, updateUAVs, 0); // call every 10 ms
+    
 }
 
 
@@ -104,11 +101,9 @@ int main(int argc, char** argv)
     glutDisplayFunc(display);
 
 
-    std::thread updateThread(updateUAVs);
+    glutTimerFunc(10, updateUAVs, 0); // start update loop
 
     // start main loop
     glutMainLoop();
-    updateThread.join();
-
     return 0;
 }
