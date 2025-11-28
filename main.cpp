@@ -38,12 +38,15 @@ void initOpenGL()
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(60.0, 1.0, 1.0, 500.00);
+
+    glMatrixMode(GL_MODELVIEW);
 }
 
 // display OpenGL
 void display() 
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
     // set camera
@@ -68,18 +71,10 @@ void display()
     glutSwapBuffers();
 }
 
-void updateUAVs(int value)
+void updateScene(int value)
 {   
-    uavMutex.lock();
-    for (auto& uav : uavs)
-    {
-        uav.controlLoop();
-    }
-    uavMutex.unlock();
-
     glutPostRedisplay(); 
-    glutTimerFunc(10, updateUAVs, 0); // call every 10 ms
-    
+    glutTimerFunc(10, updateScene, 0); 
 }
 
 
@@ -88,6 +83,19 @@ int main(int argc, char** argv)
 {
     // initialize UAVs
     initUAVs();
+
+    std::vector<std::thread> threads;
+    threads.reserve(15);
+
+    for (int i = 0; i < 15; ++i)
+    {
+        threads.emplace_back(threadFunction, &uavs[i]);
+    }
+
+    for (auto& th : threads)
+    {
+        th.detach(); // detach threads to run independently
+    }
 
     // initialize OpenGL
     glutInit(&argc, argv);
@@ -101,7 +109,7 @@ int main(int argc, char** argv)
     glutDisplayFunc(display);
 
 
-    glutTimerFunc(10, updateUAVs, 0); // start update loop
+    glutTimerFunc(10, updateScene, 0); // start update loop
 
     // start main loop
     glutMainLoop();
