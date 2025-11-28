@@ -35,6 +35,11 @@ void ECE_UAV::applyPIDControl()
     float desiredRad = 10.0f;
     float currRad = std::sqrt(posX * posX + posY * posY + posZ * posZ);
 
+    if (currRad < 0.01f) 
+    {
+        currRad = 0.01f; // prevent div by 0
+    }
+
     float error = desiredRad - currRad;
 
     // calculate force to maintain path
@@ -62,12 +67,6 @@ void ECE_UAV::checkCollision(ECE_UAV& otherUAV)
         std::swap(velY, otherUAV.velY);
         std::swap(velZ, otherUAV.velZ);
     }
-}
-
-// start thread
-void ECE_UAV::start()
-{
-    uavThread = std::thread(&ECE_UAV::controlLoop, this);
 }
 
 // motion update loop (update every 10 ms)
@@ -112,10 +111,4 @@ void handleCollisions(std::vector<ECE_UAV>& uavs)
             uavs[i].checkCollision(uavs[j]);
         }
     }
-}
-
-void ECE_UAV::join()
-{
-    if (uavThread.joinable())
-        uavThread.join();
 }
