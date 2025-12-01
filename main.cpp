@@ -1,3 +1,12 @@
+/*
+Author: Manish Rangan, Kevin Ghobrial, Peter Samaan
+Class: ECE 4122
+Last Date Modified: 11/28/2025
+Description: Simulates 15 UAVs on a virtual football field using OpenGL. 
+Each UAV is represented by an instance of the ECE_UAV class and is managed
+in its own thread, allowing concurrent updates to position and behavior.
+*/
+
 #include "ECE_UAV.h"
 #include <iostream>
 #include <vector>
@@ -6,7 +15,7 @@
 #include <mutex>
 
 
-// global uavs vector
+// global UAVs vector
 std::vector<ECE_UAV> uavs;
 std::mutex uavMutex;
 
@@ -30,7 +39,7 @@ void initUAVs()
 // OpenGL initialization
 void initOpenGL()
 {
-    // green background for football field (change Later)
+    // green background for football field
     glClearColor(0.0, 0.5, 0.0, 1.0); 
 
     glEnable(GL_DEPTH_TEST);
@@ -71,6 +80,7 @@ void display()
     glutSwapBuffers();
 }
 
+// refresh display every 10 ms
 void updateScene(int value)
 {   
     glutPostRedisplay(); 

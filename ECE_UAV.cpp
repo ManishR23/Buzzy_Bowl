@@ -1,3 +1,10 @@
+/*
+Author: Manish Rangan, Kevin Ghobrial, Peter Samaan
+Class: ECE 4122
+Last Date Modified: 11/28/2025
+Description: Implementation of ECE_UAV class member functions for UAV simulation.
+*/
+
 #include "ECE_UAV.h"
 #include <iostream>
 #include <cmath>
@@ -28,7 +35,7 @@ ECE_UAV::ECE_UAV(float x, float y, float z)
     pidVz = PIDController(4.0, 0.2, 0.8);
 }
 
-//Apply PID control
+// Apply PID control
 void ECE_UAV::applyPIDControl()
 {
     const float dt = 0.01f; // time step
