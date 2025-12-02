@@ -1,3 +1,10 @@
+/*
+Author: Manish Rangan, Kevin Ghobrial, Peter Samaan
+Class: ECE 4122
+Last Date Modified: 11/29/2025
+Description: Implementation for loading and rendering 3D OBJ models
+*/
+
 #include "ObjModel.h"
 #include <fstream>
 #include <sstream>
@@ -11,6 +18,7 @@
 #include <GL/glut.h>
 #endif
 
+// Parse index triplet "v/vt/vn" or "v//vn" or "v/vt" or "v"
 static void parseIndexTriplet(const std::string& token, int& vi, int& ti, int& ni)
 {
     vi = ti = ni = -1;
@@ -44,6 +52,7 @@ static void parseIndexTriplet(const std::string& token, int& vi, int& ti, int& n
     if (!vnStr.empty()) ni = std::stoi(vnStr);
 }
 
+// Load OBJ model from file
 bool ObjModel::loadFromFile(const std::string& path)
 {
     vertices.clear();

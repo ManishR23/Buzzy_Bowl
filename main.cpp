@@ -1,3 +1,12 @@
+/*
+Author: Manish Rangan, Kevin Ghobrial, Peter Samaan
+Class: ECE 4122
+Last Date Modified: 11/29/2025
+Description: Simulates 15 UAVs on a virtual football field using OpenGL. 
+Each UAV is represented by an instance of the ECE_UAV class and is managed
+in its own thread, allowing concurrent updates to position and behavior.
+*/
+
 #include "ECE_UAV.h"
 #include <iostream>
 #include <vector>
@@ -50,6 +59,7 @@ void initUAVs()
     }
 }
 
+// Thread function to load BMP file for each UAV
 bool loadBMP(const char* filename, BMPImage& image)
 {
     std::ifstream file(filename, std::ios::binary);
@@ -95,6 +105,7 @@ bool loadBMP(const char* filename, BMPImage& image)
     return true;
 }
 
+// Create OpenGL texture from BMP data for UAVs
 void loadUAVTexture()
 {
     BMPImage img;
@@ -122,7 +133,7 @@ void loadUAVTexture()
               << img.width << "x" << img.height << ")\n";
 }
 
-
+// Create OpenGL texture from BMP data for football field
 void loadFieldTexture()
 {
     BMPImage img;
@@ -189,14 +200,14 @@ void display()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // --- Camera: up above, looking down at the field ---
+    // Camera at bird's-eye view
     gluLookAt(
         25.0, 50.0, 180.0,   // eye position (x,y,z)
         25.0, 50.0, 0.0,     // look-at point on the field
         0.0, 1.0, 0.0        // up direction
     );
 
-    // ---------- Draw football field (textured quad) ----------
+    // Draw football field as textured quad
     if (fieldTextureLoaded)
     {
         glEnable(GL_TEXTURE_2D);
@@ -230,7 +241,7 @@ void display()
         glEnd();
     }
 
-    // ---------- Draw UAVs as red spheres ABOVE the field ----------
+    // Draw UAVs as red spheres
     glDisable(GL_TEXTURE_2D);                // important: no texture on UAVs
 
     {
@@ -281,7 +292,7 @@ void display()
     glutSwapBuffers();
 }
 
-
+// Update UAV physics, check collisions, refresh display
 void updateScene(int value)
 {
 

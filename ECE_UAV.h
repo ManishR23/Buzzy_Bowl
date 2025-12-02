@@ -1,3 +1,10 @@
+/*
+Author: Manish Rangan, Kevin Ghobrial, Peter Samaan
+Class: ECE 4122
+Last Date Modified: 11/28/2025
+Description: Interface for ECE_UAV class representing UAVs in simulation
+*/
+
 #ifndef ECE_UAV_H
 #define ECE_UAV_H
 
@@ -8,14 +15,17 @@
 
 extern std::mutex uavMutex;
 
-class PIDController {
+class PIDController
+{
 public:
     double Kp, Ki, Kd;
     double integral, lastError;
 
+    // constructor
     PIDController(double p = 0.0, double i = 0.0, double d = 0.0)
         : Kp(p), Ki(i), Kd(d), integral(0.0), lastError(0.0) {}
     
+    // calculate PID output
     double calculate(double error, double dt)
     {
         integral += error * dt;
@@ -32,7 +42,8 @@ public:
     }
 };
 
-class ECE_UAV {
+class ECE_UAV
+{
 public:
     // Flight phase for each UAV
     enum class FlightPhase { OnGround, ToCenter, OnSphere };

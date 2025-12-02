@@ -1,3 +1,10 @@
+/*
+Author: Manish Rangan, Kevin Ghobrial, Peter Samaan
+Class: ECE 4122
+Last Date Modified: 11/29/2025
+Description: Implementation of PID controllers, waypoints, and UAV physics for simulation
+*/
+
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -6,21 +13,48 @@
 #include <thread>
 
 // 3D Vector class for position, velocity, and forces
-class Vec3 {
+class Vec3
+{
 public:
     double x, y, z;
     
     Vec3(double x = 0, double y = 0, double z = 0) : x(x), y(y), z(z) {}
     
-    Vec3 operator+(const Vec3& v) const { return Vec3(x + v.x, y + v.y, z + v.z); }
-    Vec3 operator-(const Vec3& v) const { return Vec3(x - v.x, y - v.y, z - v.z); }
-    Vec3 operator*(double s) const { return Vec3(x * s, y * s, z * s); }
-    Vec3 operator/(double s) const { return Vec3(x / s, y / s, z / s); }
-    Vec3& operator+=(const Vec3& v) { x += v.x; y += v.y; z += v.z; return *this; }
+    // arithmetic operations
+    Vec3 operator+(const Vec3& v) const
+    {
+        return Vec3(x + v.x, y + v.y, z + v.z);
+    }
+    Vec3 operator-(const Vec3& v) const
+    {
+        return Vec3(x - v.x, y - v.y, z - v.z);
+    }
+    Vec3 operator*(double s) const
+    {
+        return Vec3(x * s, y * s, z * s);
+    }
+    Vec3 operator/(double s) const
+    {
+        return Vec3(x / s, y / s, z / s);
+    }
+    Vec3& operator+=(const Vec3& v)
+    {
+        x += v.x;
+        y += v.y;
+        z += v.z;
+        return *this;
+    }
     
-    double magnitude() const { return sqrt(x*x + y*y + z*z); }
-    double distance(const Vec3& v) const { return (*this - v).magnitude(); }
-    Vec3 normalized() const { 
+    double magnitude() const
+    {
+        return sqrt(x*x + y*y + z*z);
+    }
+    double distance(const Vec3& v) const
+    {
+        return (*this - v).magnitude();
+    }
+    Vec3 normalized() const
+    { 
         double mag = magnitude();
         if (mag > 0) return *this / mag;
         return Vec3(0, 0, 0);
@@ -28,7 +62,8 @@ public:
 };
 
 // PID Controller class with improved control
-class PIDController {
+class PIDController
+{
 private:
     double kp, ki, kd;
     double integral;
@@ -37,12 +72,14 @@ private:
     double output_limit;
     
 public:
+    // Constructor
     PIDController(double kp = 1.0, double ki = 0.0, double kd = 0.0, 
                   double integral_limit = 100.0, double output_limit = 50.0) 
         : kp(kp), ki(ki), kd(kd), integral(0), prev_error(0), 
           integral_limit(integral_limit), output_limit(output_limit) {}
     
-    double calculate(double error, double dt) {
+    double calculate(double error, double dt)
+    {
         // Proportional term
         double p_term = kp * error;
         
@@ -54,7 +91,8 @@ public:
         
         // Derivative term (with filter for noise reduction)
         double derivative = 0;
-        if (dt > 0) {
+        if (dt > 0)
+        {
             derivative = (error - prev_error) / dt;
         }
         double d_term = kd * derivative;
@@ -71,22 +109,28 @@ public:
         return output;
     }
     
-    void reset() {
+    void reset()
+    {
         integral = 0;
         prev_error = 0;
     }
     
-    void setGains(double p, double i, double d) {
+    void setGains(double p, double i, double d)
+    {
         kp = p;
         ki = i;
         kd = d;
     }
     
-    double getIntegral() const { return integral; }
+    double getIntegral() const
+    {
+        return integral;
+    }
 };
 
 // UAV class with improved physics and control
-class UAV {
+class UAV
+{
 private:
     Vec3 position;
     Vec3 velocity;
@@ -107,9 +151,11 @@ private:
     PIDController pid_vz;
     
 public:
+    // Constructor
     UAV(Vec3 initial_pos = Vec3(0, 0, 0), double mass = 1.0, double max_force = 30.0) 
         : position(initial_pos), velocity(0, 0, 0), acceleration(0, 0, 0),
-          mass(mass), max_force_per_axis(max_force), drag_coefficient(0.05) {
+          mass(mass), max_force_per_axis(max_force), drag_coefficient(0.05)
+    {
         
         // Position PID controllers - generates desired velocity
         pid_x.setGains(4.0, 0.2, 2.0);   // P, I, D gains for X position
@@ -126,7 +172,8 @@ public:
     }
     
     // Calculate control forces using cascade PID (position -> velocity -> force)
-    Vec3 calculateControlForces(const Vec3& target, double dt) {
+    Vec3 calculateControlForces(const Vec3& target, double dt)
+    {
         // Position error
         Vec3 pos_error = target - position;
         
@@ -163,7 +210,8 @@ public:
     }
     
     // Alternative: Simple P-D controller with feed-forward for better stability
-    Vec3 calculateSimpleControlForces(const Vec3& target, double dt) {
+    Vec3 calculateSimpleControlForces(const Vec3& target, double dt)
+    {
         Vec3 pos_error = target - position;
         
         // Position control with velocity damping
@@ -184,7 +232,8 @@ public:
     }
     
     // Update UAV physics
-    void update(const Vec3& control_force, double dt) {
+    void update(const Vec3& control_force, double dt)
+    {
         // Calculate drag force (proportional to velocity squared for more realism)
         Vec3 drag;
         drag.x = -drag_coefficient * velocity.x * std::abs(velocity.x);
@@ -194,30 +243,39 @@ public:
         // Gravity acts only on Z axis
         Vec3 gravity(0, 0, -9.81 * mass);
         
-        // Total force
+        // Calculate force and acceleration
         Vec3 total_force = control_force + drag + gravity;
-        
-        // Newton's second law: F = ma
         acceleration = total_force / mass;
         
-        // Update velocity and position using Euler integration
+        // Update velocity and position
         velocity = velocity + acceleration * dt;
         position = position + velocity * dt;
         
-        // Optional: Add ground constraint
-        if (position.z < 0) {
+        // Add ground constraint
+        if (position.z < 0)
+        {
             position.z = 0;
             if (velocity.z < 0) velocity.z = 0;
         }
     }
     
     // Getters
-    Vec3 getPosition() const { return position; }
-    Vec3 getVelocity() const { return velocity; }
-    Vec3 getAcceleration() const { return acceleration; }
+    Vec3 getPosition() const
+    {
+        return position;
+    }
+    Vec3 getVelocity() const
+    {
+        return velocity;
+    }
+    Vec3 getAcceleration() const
+    {
+        return acceleration;
+    }
     
     // Reset all controllers
-    void resetControllers() {
+    void resetControllers()
+    {
         pid_x.reset();
         pid_y.reset();
         pid_z.reset();
@@ -226,8 +284,9 @@ public:
         pid_vz.reset();
     }
     
-    // Set position (for testing)
-    void setPosition(const Vec3& pos) {
+    // Set position directly
+    void setPosition(const Vec3& pos)
+    {
         position = pos;
         velocity = Vec3(0, 0, 0);
         acceleration = Vec3(0, 0, 0);
@@ -236,7 +295,8 @@ public:
 };
 
 // Path manager for waypoint navigation
-class PathManager {
+class PathManager
+{
 private:
     std::vector<Vec3> waypoints;
     size_t current_waypoint_index;
@@ -244,24 +304,29 @@ private:
     double approach_speed_factor;
     
 public:
+    // Constructor
     PathManager(double tolerance = 1.0) 
         : current_waypoint_index(0), waypoint_tolerance(tolerance),
           approach_speed_factor(1.0) {}
     
-    void addWaypoint(const Vec3& point) {
+    void addWaypoint(const Vec3& point)
+    {
         waypoints.push_back(point);
     }
     
-    void addWaypoints(const std::vector<Vec3>& points) {
+    void addWaypoints(const std::vector<Vec3>& points)
+    {
         waypoints.insert(waypoints.end(), points.begin(), points.end());
     }
     
-    Vec3 getCurrentTarget() const {
+    Vec3 getCurrentTarget() const
+    {
         if (waypoints.empty()) return Vec3(0, 0, 0);
         return waypoints[current_waypoint_index];
     }
     
-    bool updateTarget(const Vec3& current_position) {
+    bool updateTarget(const Vec3& current_position)
+    {
         if (waypoints.empty()) return false;
         
         // Check if UAV reached current waypoint
@@ -269,11 +334,10 @@ public:
         
         // Dynamic tolerance based on altitude (more lenient at higher altitudes)
         double dynamic_tolerance = waypoint_tolerance;
-        if (waypoints[current_waypoint_index].z > 5) {
-            dynamic_tolerance = waypoint_tolerance * 1.5;
-        }
+        if (waypoints[current_waypoint_index].z > 5) dynamic_tolerance = waypoint_tolerance * 1.5;
         
-        if (distance < dynamic_tolerance) {
+        if (distance < dynamic_tolerance)
+        {
             std::cout << "Reached waypoint " << current_waypoint_index + 1 
                      << " (distance: " << distance << ")\n";
             current_waypoint_index++;
@@ -285,14 +349,27 @@ public:
         return false;
     }
     
-    bool hasWaypoints() const { return !waypoints.empty(); }
-    size_t getCurrentIndex() const { return current_waypoint_index; }
-    size_t getWaypointCount() const { return waypoints.size(); }
-    void reset() { current_waypoint_index = 0; }
+    bool hasWaypoints() const
+    {
+        return !waypoints.empty();
+    }
+    size_t getCurrentIndex() const
+    {
+        return current_waypoint_index;
+    }
+    size_t getWaypointCount() const
+    {
+        return waypoints.size();
+    }
+    void reset()
+    {
+        current_waypoint_index = 0;
+    }
 };
 
 // Simulation class
-class Simulation {
+class Simulation
+{
 private:
     UAV uav;
     PathManager path_manager;
@@ -302,13 +379,16 @@ private:
     bool use_cascade_control;
     
 public:
+    // Constructor
     Simulation(double timestep = 0.01, bool verbose = true, bool cascade = true) 
         : uav(Vec3(0, 0, 0)), simulation_time(0), dt(timestep), 
           verbose(verbose), use_cascade_control(cascade) {}
     
-    void setupPath() {
+    void setupPath()
+    {
         // Create a 3D path with multiple waypoints
-        path_manager.addWaypoints({
+        path_manager.addWaypoints(
+        {
             Vec3(0, 0, 5),      // Take off
             Vec3(10, 0, 5),     // Move forward
             Vec3(10, 10, 5),    // Move right
@@ -319,9 +399,11 @@ public:
         });
     }
     
-    void setupSimplePath() {
+    void setupSimplePath()
+    {
         // Simpler path for testing
-        path_manager.addWaypoints({
+        path_manager.addWaypoints(
+        {
             Vec3(0, 0, 2),      // Small takeoff
             Vec3(5, 0, 2),      // Move forward
             Vec3(5, 5, 2),      // Move right
@@ -331,7 +413,9 @@ public:
         });
     }
     
-    void run(double duration) {
+    // Full simulation loop
+    void run(double duration)
+    {
         std::cout << "\n=== UAV PID Path Control Simulation ===\n";
         std::cout << "Control mode: " << (use_cascade_control ? "Cascade PID" : "Simple PD+FF") << "\n";
         std::cout << "Simulation duration: " << duration << " seconds\n";
@@ -345,15 +429,19 @@ public:
         double total_error = 0;
         int error_samples = 0;
         
-        while (simulation_time < duration && path_manager.hasWaypoints()) {
+        while (simulation_time < duration && path_manager.hasWaypoints())
+        {
             // Get current target waypoint
             Vec3 target = path_manager.getCurrentTarget();
             
             // Calculate control forces
             Vec3 control_force;
-            if (use_cascade_control) {
+            if (use_cascade_control)
+            {
                 control_force = uav.calculateControlForces(target, dt);
-            } else {
+            }
+            else
+            {
                 control_force = uav.calculateSimpleControlForces(target, dt);
             }
             
@@ -368,16 +456,19 @@ public:
             error_samples++;
             
             // Check if waypoint reached and update target
-            if (path_manager.updateTarget(uav.getPosition())) {
+            if (path_manager.updateTarget(uav.getPosition()))
+            {
                 uav.resetControllers();  // Reset PID controllers for new waypoint
-                if (verbose) {
+                if (verbose)
+                {
                     std::cout << "\n>>> Path completed! Restarting...\n\n";
                     path_manager.reset();
                 }
             }
             
             // Display status periodically
-            if (verbose && display_counter % display_interval == 0) {
+            if (verbose && display_counter % display_interval == 0)
+            {
                 displayStatus(target, control_force);
             }
             
@@ -394,7 +485,8 @@ public:
                   << uav.getPosition().y << ", " << uav.getPosition().z << ")\n";
     }
     
-    void displayStatus(const Vec3& target, const Vec3& control_force) {
+    void displayStatus(const Vec3& target, const Vec3& control_force)
+    {
         Vec3 pos = uav.getPosition();
         Vec3 vel = uav.getVelocity();
         double error = pos.distance(target);
@@ -417,7 +509,8 @@ public:
     }
 };
 
-int main() {
+int main()
+{
     std::cout << "UAV PID Path Control System\n";
     std::cout << "===========================\n\n";
     
