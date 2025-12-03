@@ -126,7 +126,7 @@ void loadUAVTexture()
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
                  img.width, img.height, 0,
-                 GL_BGR, GL_UNSIGNED_BYTE, img.data.data());
+                 GL_BGR_EXT, GL_UNSIGNED_BYTE, img.data.data());
 
     uavTextureLoaded = true;
     std::cout << "Loaded UAV texture from uav.bmp ("
@@ -160,7 +160,7 @@ void loadFieldTexture()
         img.width,
         img.height,
         0,
-        GL_BGR,             // If this gives an error, try GL_BGR_EXT
+        GL_BGR_EXT,             // If this gives an error, try GL_BGR_EXT
         GL_UNSIGNED_BYTE,
         img.data.data()
     );
